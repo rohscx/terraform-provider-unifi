@@ -116,20 +116,23 @@ func (c *Client) setAPIUrlStyle(ctx context.Context) error {
 	defer resp.Body.Close()
 	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
-	if resp.StatusCode == http.StatusOK {
-		// the new API returns a 200 for a / request
-		c.apiPath = apiPathNew
-		c.apiV2Path = apiV2PathNew
-		c.loginPath = loginPathNew
-		c.statusPath = statusPathNew
-		return nil
+	// Legacy controllers return a redirect to /manage, while newer API styles
+	// tend to return 200/401/403 directly from /. Prefer the newer API path
+	// unless we detect the known legacy redirect behaviour.
+	if resp.StatusCode == http.StatusFound {
+		if location := resp.Header.Get("Location"); strings.Contains(location, "/manage") {
+			c.apiPath = apiPath
+			c.apiV2Path = apiV2Path
+			c.loginPath = loginPath
+			c.statusPath = statusPath
+			return nil
+		}
 	}
 
-	// The old version returns a "302" (to /manage) for a / request
-	c.apiPath = apiPath
-	c.apiV2Path = apiV2Path
-	c.loginPath = loginPath
-	c.statusPath = statusPath
+	c.apiPath = apiPathNew
+	c.apiV2Path = apiV2PathNew
+	c.loginPath = loginPathNew
+	c.statusPath = statusPathNew
 	return nil
 }
 
@@ -243,7 +246,7 @@ func (c *Client) do(ctx context.Context, method, relativeURL string, reqBody int
 		c.csrf = resp.Header.Get("x-csrf-token")
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		errBody := struct {
 			Meta meta `json:"meta"`
 			Data []struct {
@@ -251,7 +254,7 @@ func (c *Client) do(ctx context.Context, method, relativeURL string, reqBody int
 			} `json:"data"`
 		}{}
 		if err = json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
-			return err
+			return fmt.Errorf("unexpected status %s for %s %s", resp.Status, method, url.String())
 		}
 		var apiErr error
 		if len(errBody.Data) > 0 && errBody.Data[0].Meta.RC == "error" {
