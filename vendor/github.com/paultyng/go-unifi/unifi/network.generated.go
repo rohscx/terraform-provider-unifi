@@ -121,6 +121,7 @@ type Network struct {
 	NATOutboundIPAddresses       []NetworkNATOutboundIPAddresses `json:"nat_outbound_ip_addresses,omitempty"`
 	Name                         string                          `json:"name,omitempty"`         // .{1,128}
 	NetworkGroup                 string                          `json:"networkgroup,omitempty"` // LAN[2-8]?
+	FirewallZoneID               string                          `json:"firewall_zone_id,omitempty"`
 	OpenVPNConfiguration         string                          `json:"openvpn_configuration,omitempty"`
 	OpenVPNConfigurationFilename string                          `json:"openvpn_configuration_filename,omitempty"`
 	OpenVPNLocalAddress          string                          `json:"openvpn_local_address,omitempty"`  // ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$

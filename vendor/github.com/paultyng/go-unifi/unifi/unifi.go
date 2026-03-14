@@ -247,24 +247,45 @@ func (c *Client) do(ctx context.Context, method, relativeURL string, reqBody int
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		respBytes, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			return fmt.Errorf("unexpected status %s for %s %s", resp.Status, method, url.String())
+		}
+
 		errBody := struct {
 			Meta meta `json:"meta"`
 			Data []struct {
 				Meta meta `json:"meta"`
 			} `json:"data"`
 		}{}
-		if err = json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
-			return fmt.Errorf("unexpected status %s for %s %s", resp.Status, method, url.String())
+		if err = json.Unmarshal(respBytes, &errBody); err == nil {
+			var apiErr error
+			if len(errBody.Data) > 0 && errBody.Data[0].Meta.RC == "error" {
+				// check first error in data, should we look for more than one?
+				apiErr = errBody.Data[0].Meta.error()
+			}
+			if apiErr == nil {
+				apiErr = errBody.Meta.error()
+			}
+			if apiErr != nil {
+				return fmt.Errorf("%w (%s) for %s %s", apiErr, resp.Status, method, url.String())
+			}
 		}
-		var apiErr error
-		if len(errBody.Data) > 0 && errBody.Data[0].Meta.RC == "error" {
-			// check first error in data, should we look for more than one?
-			apiErr = errBody.Data[0].Meta.error()
+
+		v2ErrBody := struct {
+			Code      string `json:"code"`
+			ErrorCode int    `json:"errorCode"`
+			Message   string `json:"message"`
+		}{}
+		if err = json.Unmarshal(respBytes, &v2ErrBody); err == nil && v2ErrBody.Message != "" {
+			return fmt.Errorf("%w (%s) for %s %s", &APIError{RC: v2ErrBody.Code, Message: v2ErrBody.Message}, resp.Status, method, url.String())
 		}
-		if apiErr == nil {
-			apiErr = errBody.Meta.error()
+
+		if len(respBytes) > 0 {
+			return fmt.Errorf("unexpected status %s for %s %s: %s", resp.Status, method, url.String(), string(respBytes))
 		}
-		return fmt.Errorf("%w (%s) for %s %s", apiErr, resp.Status, method, url.String())
+
+		return fmt.Errorf("unexpected status %s for %s %s", resp.Status, method, url.String())
 	}
 
 	if respBody == nil || resp.ContentLength == 0 {
