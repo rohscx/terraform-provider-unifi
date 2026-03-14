@@ -589,3 +589,45 @@ func (c *lazyClient) UpdateSettingRadius(ctx context.Context, site string, d *un
 	}
 	return c.inner.UpdateSettingRadius(ctx, site, d)
 }
+
+func (c *lazyClient) ListFirewallZones(ctx context.Context, site string) ([]unifi.FirewallZone, error) {
+	if err := c.init(ctx); err != nil {
+		return nil, err
+	}
+	return c.inner.ListFirewallZones(ctx, site)
+}
+
+func (c *lazyClient) ListFirewallPolicies(ctx context.Context, site string) ([]unifi.FirewallPolicy, error) {
+	if err := c.init(ctx); err != nil {
+		return nil, err
+	}
+	return c.inner.ListFirewallPolicies(ctx, site)
+}
+
+func (c *lazyClient) DeleteFirewallPolicy(ctx context.Context, site, id string) error {
+	if err := c.init(ctx); err != nil {
+		return err
+	}
+	return c.inner.DeleteFirewallPolicy(ctx, site, id)
+}
+
+func (c *lazyClient) CreateFirewallPolicy(ctx context.Context, site string, d *unifi.FirewallPolicy) (*unifi.FirewallPolicy, error) {
+	if err := c.init(ctx); err != nil {
+		return nil, err
+	}
+	return c.inner.CreateFirewallPolicy(ctx, site, d)
+}
+
+func (c *lazyClient) GetFirewallPolicy(ctx context.Context, site, id string) (*unifi.FirewallPolicy, error) {
+	if err := c.init(ctx); err != nil {
+		return nil, err
+	}
+	return c.inner.GetFirewallPolicy(ctx, site, id)
+}
+
+func (c *lazyClient) UpdateFirewallPolicy(ctx context.Context, site string, d *unifi.FirewallPolicy) (*unifi.FirewallPolicy, error) {
+	if err := c.init(ctx); err != nil {
+		return nil, err
+	}
+	return c.inner.UpdateFirewallPolicy(ctx, site, d)
+}
