@@ -10,21 +10,21 @@ type FirewallPolicy struct {
 	Name                  string                 `json:"name"`
 	Action                string                 `json:"action"`
 	Protocol              string                 `json:"protocol"`
-	IPVersion             string                 `json:"ip_version"`
-	Enabled               bool                   `json:"enabled"`
-	Index                 int                    `json:"index"`
-	Predefined            bool                   `json:"predefined,omitempty"`
-	Logging               bool                   `json:"logging"`
-	Description           string                 `json:"description,omitempty"`
-	ConnectionStateType   string                 `json:"connection_state_type"`
-	ConnectionStates      []string               `json:"connection_states"`
-	CreateAllowRespond    bool                   `json:"create_allow_respond"`
-	MatchIPSec            bool                   `json:"match_ip_sec"`
-	MatchIPSecType        string                 `json:"match_ip_sec_type,omitempty"`
-	MatchOppositeProtocol bool                   `json:"match_opposite_protocol"`
-	ICMPTypename          string                 `json:"icmp_typename"`
-	ICMPV6Typename        string                 `json:"icmp_v6_typename"`
-	Schedule              FirewallPolicySchedule `json:"schedule"`
+	IPVersion             string                  `json:"ip_version"`
+	Enabled               bool                    `json:"enabled"`
+	Index                 int                     `json:"index,omitempty"`
+	Predefined            bool                    `json:"predefined,omitempty"`
+	Logging               bool                    `json:"logging,omitempty"`
+	Description           string                  `json:"description,omitempty"`
+	ConnectionStateType   string                  `json:"connection_state_type,omitempty"`
+	ConnectionStates      []string                `json:"connection_states,omitempty"`
+	CreateAllowRespond    bool                    `json:"create_allow_respond,omitempty"`
+	MatchIPSec            bool                    `json:"match_ip_sec,omitempty"`
+	MatchIPSecType        string                  `json:"match_ip_sec_type,omitempty"`
+	MatchOppositeProtocol bool                    `json:"match_opposite_protocol,omitempty"`
+	ICMPTypename          string                  `json:"icmp_typename,omitempty"`
+	ICMPV6Typename        string                  `json:"icmp_v6_typename,omitempty"`
+	Schedule              *FirewallPolicySchedule `json:"schedule"`
 	Source                FirewallPolicyEndpoint `json:"source"`
 	Destination           FirewallPolicyEndpoint `json:"destination"`
 }

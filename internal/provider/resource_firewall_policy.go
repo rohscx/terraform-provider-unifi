@@ -91,9 +91,15 @@ func resourceFirewallPolicyGetResourceData(d *schema.ResourceData) *unifi.Firewa
 		ICMPTypename:          d.Get("icmp_typename").(string),
 		ICMPV6Typename:        d.Get("icmp_v6_typename").(string),
 	}
+	if policy.IPVersion == "" {
+		policy.IPVersion = "IPV4"
+	}
 	policy.Source = expandFirewallPolicyEndpoint(d.Get("source").([]interface{}))
 	policy.Destination = expandFirewallPolicyEndpoint(d.Get("destination").([]interface{}))
-	policy.Schedule = expandFirewallPolicySchedule(d.Get("schedule").([]interface{}))
+	policy.Schedule = expandFirewallPolicySchedulePtr(d.Get("schedule").([]interface{}))
+	if policy.Schedule == nil {
+		policy.Schedule = &unifi.FirewallPolicySchedule{Mode: "ALWAYS"}
+	}
 	return policy
 }
 
@@ -110,12 +116,12 @@ func expandFirewallPolicyEndpoint(raw []interface{}) unifi.FirewallPolicyEndpoin
 	}
 }
 
-func expandFirewallPolicySchedule(raw []interface{}) unifi.FirewallPolicySchedule {
+func expandFirewallPolicySchedulePtr(raw []interface{}) *unifi.FirewallPolicySchedule {
 	if len(raw) == 0 || raw[0] == nil {
-		return unifi.FirewallPolicySchedule{}
+		return nil
 	}
 	m := raw[0].(map[string]interface{})
-	return unifi.FirewallPolicySchedule{Mode: m["mode"].(string), RepeatOnDays: interfaceToStringList(m["repeat_on_days"]), TimeAllDay: m["time_all_day"].(bool), TimeRangeStart: m["time_range_start"].(string), TimeRangeEnd: m["time_range_end"].(string)}
+	return &unifi.FirewallPolicySchedule{Mode: m["mode"].(string), RepeatOnDays: interfaceToStringList(m["repeat_on_days"]), TimeAllDay: m["time_all_day"].(bool), TimeRangeStart: m["time_range_start"].(string), TimeRangeEnd: m["time_range_end"].(string)}
 }
 
 func resourceFirewallPolicySetResourceData(resp *unifi.FirewallPolicy, d *schema.ResourceData, site string) diag.Diagnostics {
@@ -139,7 +145,9 @@ func resourceFirewallPolicySetResourceData(resp *unifi.FirewallPolicy, d *schema
 	_ = d.Set("icmp_v6_typename", resp.ICMPV6Typename)
 	_ = d.Set("source", []map[string]interface{}{flattenFirewallPolicyEndpoint(resp.Source)})
 	_ = d.Set("destination", []map[string]interface{}{flattenFirewallPolicyEndpoint(resp.Destination)})
-	_ = d.Set("schedule", []map[string]interface{}{flattenFirewallPolicySchedule(resp.Schedule)})
+	if resp.Schedule != nil {
+		_ = d.Set("schedule", []map[string]interface{}{flattenFirewallPolicySchedule(*resp.Schedule)})
+	}
 	return nil
 }
 
