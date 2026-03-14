@@ -41,8 +41,10 @@ type FirewallPolicyEndpoint struct {
 	PortGroupID        string   `json:"port_group_id,omitempty"`
 	PortRanges         []string `json:"port_ranges,omitempty"`
 	MatchOpositePorts  bool     `json:"match_opposite_ports"`
-	NetworkID          string   `json:"network_id,omitempty"`
-	MatchMAC           bool     `json:"match_mac,omitempty"`
+	NetworkID              string   `json:"network_id,omitempty"`
+	NetworkIDs             []string `json:"network_ids,omitempty"`
+	MatchOppositeNetworks  bool     `json:"match_opposite_networks,omitempty"`
+	MatchMAC               bool     `json:"match_mac,omitempty"`
 }
 
 type FirewallPolicySchedule struct {

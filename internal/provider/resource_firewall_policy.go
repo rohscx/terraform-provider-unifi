@@ -66,8 +66,10 @@ func firewallPolicyEndpointSchema() *schema.Schema {
 		"port_group_id":        {Type: schema.TypeString, Optional: true},
 		"port_ranges":          {Type: schema.TypeList, Optional: true, Computed: true, Elem: &schema.Schema{Type: schema.TypeString}},
 		"match_opposite_ports": {Type: schema.TypeBool, Optional: true, Computed: true},
-		"network_id":           {Type: schema.TypeString, Optional: true},
-		"match_mac":            {Type: schema.TypeBool, Optional: true, Computed: true},
+		"network_id":               {Type: schema.TypeString, Optional: true},
+		"network_ids":              {Type: schema.TypeList, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+		"match_opposite_networks":  {Type: schema.TypeBool, Optional: true, Computed: true},
+		"match_mac":                {Type: schema.TypeBool, Optional: true, Computed: true},
 	}}}
 }
 
@@ -112,7 +114,7 @@ func expandFirewallPolicyEndpoint(raw []interface{}) unifi.FirewallPolicyEndpoin
 		ZoneID: m["zone_id"].(string), MatchingTarget: m["matching_target"].(string), MatchingTargetType: m["matching_target_type"].(string),
 		IPs: interfaceToStringList(m["ips"]), IPGroupID: m["ip_group_id"].(string), MatchOppositeIPs: m["match_opposite_ips"].(bool),
 		PortMatchingType: m["port_matching_type"].(string), Port: m["port"].(string), PortGroupID: m["port_group_id"].(string),
-		PortRanges: interfaceToStringList(m["port_ranges"]), MatchOpositePorts: m["match_opposite_ports"].(bool), NetworkID: m["network_id"].(string), MatchMAC: m["match_mac"].(bool),
+		PortRanges: interfaceToStringList(m["port_ranges"]), MatchOpositePorts: m["match_opposite_ports"].(bool), NetworkID: m["network_id"].(string), NetworkIDs: interfaceToStringList(m["network_ids"]), MatchOppositeNetworks: m["match_opposite_networks"].(bool), MatchMAC: m["match_mac"].(bool),
 	}
 }
 
@@ -152,7 +154,7 @@ func resourceFirewallPolicySetResourceData(resp *unifi.FirewallPolicy, d *schema
 }
 
 func flattenFirewallPolicyEndpoint(e unifi.FirewallPolicyEndpoint) map[string]interface{} {
-	return map[string]interface{}{"zone_id": e.ZoneID, "matching_target": e.MatchingTarget, "matching_target_type": e.MatchingTargetType, "ips": e.IPs, "ip_group_id": e.IPGroupID, "match_opposite_ips": e.MatchOppositeIPs, "port_matching_type": e.PortMatchingType, "port": e.Port, "port_group_id": e.PortGroupID, "port_ranges": e.PortRanges, "match_opposite_ports": e.MatchOpositePorts, "network_id": e.NetworkID, "match_mac": e.MatchMAC}
+	return map[string]interface{}{"zone_id": e.ZoneID, "matching_target": e.MatchingTarget, "matching_target_type": e.MatchingTargetType, "ips": e.IPs, "ip_group_id": e.IPGroupID, "match_opposite_ips": e.MatchOppositeIPs, "port_matching_type": e.PortMatchingType, "port": e.Port, "port_group_id": e.PortGroupID, "port_ranges": e.PortRanges, "match_opposite_ports": e.MatchOpositePorts, "network_id": e.NetworkID, "network_ids": e.NetworkIDs, "match_opposite_networks": e.MatchOppositeNetworks, "match_mac": e.MatchMAC}
 }
 
 func flattenFirewallPolicySchedule(s unifi.FirewallPolicySchedule) map[string]interface{} {
