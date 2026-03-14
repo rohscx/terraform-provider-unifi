@@ -167,9 +167,69 @@ while True:
 
 ## Known Limitations
 
-- **Zone names not available via fallback**: When the v2 `/firewall-zones` endpoint is unavailable, zones are discovered from network configs which only contain zone IDs, not names. Name-based lookups in `unifi_firewall_zone` require a controller that exposes the zones endpoint.
+- **Zone names not available on UCG/UDM controllers**: The v2 `/firewall-zones` endpoint returns **404** on UCG Max (Network 10.x) and likely other UDM-based controllers. The provider falls back to discovering zone IDs from network configs, but network configs do not contain zone names — only zone IDs. This means `data.unifi_firewall_zones` returns zones with empty `name` fields, and name-based lookups in `data.unifi_firewall_zone` will not work.
 - **Predefined policies are read-only**: The provider rejects management of predefined (system) policies.
 - **Enum values are UPPERCASE**: `IPV4` not `IPv4`, `SPECIFIC` not `specific`, `ALLOW` not `allow`.
+
+### Workaround: Zone ID Mapping
+
+Since zone IDs are stable but not discoverable by name, define them in a `locals` block. You can find zone IDs by inspecting existing firewall policies in the Unifi UI or via the API (`/proxy/network/v2/api/site/default/firewall-policies`).
+
+```hcl
+locals {
+  zones = {
+    internal = "6787fdf03cdacc306b0322fe"
+    wan      = "6787fdf03cdacc306b0322ff"
+    gateway  = "6787fdf03cdacc306b032300"
+    vpn      = "6787fdf03cdacc306b032301"
+    guest    = "6787fdf03cdacc306b032302"
+    # Add custom zones as needed
+  }
+}
+
+resource "unifi_firewall_policy" "example" {
+  name     = "Allow VPN to LAN"
+  action   = "ALLOW"
+  protocol = "icmp"
+  enabled  = true
+
+  source {
+    zone_id              = local.zones.vpn
+    matching_target      = "IP"
+    matching_target_type = "SPECIFIC"
+    ips                  = ["172.17.254.5"]
+    port_matching_type   = "ANY"
+  }
+
+  destination {
+    zone_id              = local.zones.internal
+    matching_target      = "ANY"
+    port_matching_type   = "ANY"
+  }
+}
+```
+
+To discover your zone IDs, query the firewall policies API and correlate zone IDs with networks:
+
+```bash
+# Get all policies (zone IDs are in source.zone_id / destination.zone_id)
+curl -sk "https://YOUR_CONTROLLER/proxy/network/v2/api/site/default/firewall-policies" \
+  -b "TOKEN=..." | python3 -m json.tool
+
+# Get networks (each has a firewall_zone_id field)
+curl -sk "https://YOUR_CONTROLLER/proxy/network/api/s/default/rest/networkconf" \
+  -b "TOKEN=..." | python3 -c "
+import json, sys
+from collections import defaultdict
+data = json.load(sys.stdin).get('data', [])
+zones = defaultdict(list)
+for n in data:
+    zid = n.get('zone_id') or n.get('firewall_zone_id', '')
+    if zid: zones[zid].append(n.get('name', 'unnamed'))
+for zid, nets in sorted(zones.items()):
+    print(f'{zid} -> {\", \".join(nets)}')
+"
+```
 
 ## Tested On
 
