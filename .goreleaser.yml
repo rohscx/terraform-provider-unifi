@@ -1,3 +1,4 @@
+version: 2
 builds:
 - env:
     - CGO_ENABLED=0
@@ -37,4 +38,4 @@ signs:
       - "--detach-sign"
       - "${artifact}"
 changelog:
-  skip: true
+  disable: true
